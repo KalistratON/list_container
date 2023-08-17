@@ -69,7 +69,7 @@ public:
 	// decltype(auto) .. { return (...) } - return a reference of object : C++14
 	/*typename Container::reference */ decltype(auto) operator*() const 
 	{	
-		if (ptr)
+		if (!ptr)
 			throw ListException(ListException::BAD_ELEMENT);
 
 		return (ptr->data);	

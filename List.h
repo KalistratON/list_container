@@ -36,6 +36,16 @@ public:
 	using iterator					= ListIterator<List>;
 	using const_iterator			= ListIterator<List<const T>>;
 
+private:
+	void returnTo()
+	{
+		while (head->prev)
+			head = head->prev;
+		tail = head;
+		while (tail->next)
+			tail = tail->next;
+	}
+
 public:
 
 	List() noexcept :
@@ -44,10 +54,13 @@ public:
 
 	// Добавить буферную функцию
 
-	explicit List(size_t count) :
+	/*explicit */ List(size_t count) :
 		head(nullptr),
 		tail(nullptr)
 	{
+		if (count < 0)
+			throw ListException(ListException::BAD_SIZE);
+
 		Node* cur_elem		= head;
 		Node* cur_prev_elem = nullptr;
 
@@ -160,7 +173,9 @@ public:
 		tail = cur_in;
 	}
 
-	List(List&& list) noexcept
+	List(List&& list) noexcept :
+		head(nullptr),
+		tail(nullptr)
 	{
 		// TEST_REQUIRED
 
@@ -210,14 +225,41 @@ public:
 	List& operator = (List& list)
 	{
 		List temp(list);
-		std::swap(temp);
+		(*this) = std::move(temp);
 		return *this;
 	}
 
-	List& operator = (List&& list)
+	List& operator = (List&& list) noexcept
 	{
-		List temp(std::move(list));
-		std::swap(temp);
+		// TEST_REQUIRED
+
+		if (head = nullptr, tail = nullptr, !list.head)
+			return *this;
+
+		head = list.head;
+		tail = list.tail;
+
+		Node* cur_out = list.head->next;
+		Node* cur_in = head;
+
+		list.head = nullptr;
+		list.tail = nullptr;
+
+		while (cur_out)
+		{
+			cur_in->next = cur_out;
+
+			Node* cur_in_next = cur_in->next;
+			cur_in_next->prev = cur_in;
+			cur_in_next->data = cur_out->data;
+
+			cur_in = cur_in->next;
+			cur_out = cur_out->next;
+		}
+
+		cur_in->next = nullptr;
+		tail = cur_in;
+
 		return *this;
 	}
 
@@ -345,18 +387,24 @@ public:
 
 	iterator insert(iterator pos, const_reference elem)
 	{
+		if (!(bool)pos)
+			throw ListException(ListException::BAD_ELEMENT);
+
 		auto elem_prev	= pos.ptr->prev;
 		auto new_elem	= new Node{ elem, pos.ptr->prev, pos.ptr };
 
-		elem_prev->next = new_elem;
+		if (elem_prev)
+			elem_prev->next = new_elem;
 		pos.ptr->prev	= new_elem;
+
+		returnTo();
 
 		return --iterator(pos);
 	}
 
 	iterator insert(iterator pos, iterator beg, iterator end)
 	{
-		auto result = iterator(pos);
+		iterator result(pos);
 		
 		for (auto it = beg; it != end; ++it)
 		{
@@ -371,6 +419,9 @@ public:
 
 	iterator erase(iterator pos)
 	{
+		if (pos == begin())
+			head = head->next;
+
 		auto del_elem	= pos.ptr;
 		auto prev_elem	= pos.ptr->prev;
 		auto next_elem	= pos.ptr->next;
@@ -380,6 +431,8 @@ public:
 
 		auto result = ++iterator(pos);
 		delete del_elem;
+
+		returnTo();
 
 		return result;
 	}
