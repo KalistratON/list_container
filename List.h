@@ -399,7 +399,7 @@ public:
 
 		returnTo();
 
-		return --iterator(pos);
+		return iterator(pos);
 	}
 
 	iterator insert(iterator pos, iterator beg, iterator end)
@@ -421,13 +421,20 @@ public:
 	{
 		if (pos == begin())
 			head = head->next;
+		
+		auto del_elem = pos.ptr;
+		decltype(pos.ptr) prev_elem = nullptr;
+		decltype(pos.ptr) next_elem = nullptr;
+		
+		if(pos.ptr->prev)
+			prev_elem	= pos.ptr->prev;
+		if (pos.ptr->next)
+			next_elem	= pos.ptr->next;
 
-		auto del_elem	= pos.ptr;
-		auto prev_elem	= pos.ptr->prev;
-		auto next_elem	= pos.ptr->next;
-
-		prev_elem->next = next_elem;
-		next_elem->prev = prev_elem;
+		if(prev_elem)
+			prev_elem->next = next_elem;
+		if (next_elem)
+			next_elem->prev = prev_elem;
 
 		auto result = ++iterator(pos);
 		delete del_elem;
