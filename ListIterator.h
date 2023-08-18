@@ -75,6 +75,14 @@ public:
 		return (ptr->data);	
 	};
 
+	typename Container::data_type* operator->() const
+	{
+		if (!ptr)
+			throw ListException(ListException::BAD_ELEMENT);
+
+		return ptr;
+	};
+
 	ListIterator& operator=(const ListIterator&) noexcept
 	{	return *this;		};
 
